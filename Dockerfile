@@ -23,11 +23,17 @@ RUN apt-get install -y --no-install-recommends vim less net-tools inetutils-ping
 RUN add-apt-repository ppa:webupd8team/java -y && \
     apt-get update && \
     echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections && \
-    apt-get install -y oracle-java8-installer && \
-    apt install oracle-java8-unlimited-jce-policy && \
-    rm -r /var/cache/oracle-jdk8-installer
+    apt-get install -y oracle-java8-installer || true
+### Fix bug: could not download from Oracle
+RUN sed -i "s|JAVA_VERSION=8u181|JAVA_VERSION=8u191|" /var/lib/dpkg/info/oracle-java8-installer.*
+RUN sed -i "s|PARTNER_URL=http://download.oracle.com/otn-pub/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/|PARTNER_URL=http://download.oracle.com/otn-pub/java/jdk/8u191-b12/2787e4a523244c269598db4e85c51e0c/|" /var/lib/dpkg/info/oracle-java8-installer.*
+RUN sed -i 's|SHA256SUM_TGZ="1845567095bfbfebd42ed0d09397939796d05456290fb20a83c476ba09f991d3"|SHA256SUM_TGZ="53c29507e2405a7ffdbba627e6d64856089b094867479edc5ede4105c1da0d65"|' /var/lib/dpkg/info/oracle-java8-installer.*
+RUN sed -i "s|J_DIR=jdk1.8.0_181|J_DIR=jdk1.8.0_191|" /var/lib/dpkg/info/oracle-java8-installer.*
+RUN apt-get install -f -y && \
+    apt-get install -y oracle-java8-set-default
+RUN apt install oracle-java8-unlimited-jce-policy
+RUN rm -r /var/cache/oracle-jdk8-installer
 ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
-
 
 # Spark
 RUN wget -O - http://archive.apache.org/dist/spark/spark-2.2.2/spark-2.2.2-bin-hadoop2.7.tgz | tar zx
